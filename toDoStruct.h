@@ -31,7 +31,6 @@ int dimensionLista(tLista *);
 void insertarPrimerNodo(tLista **, tElemento);
 void insertarNodo(tLista **, tElemento);
 void eliminarPadre(tLista **, int);
-
 tLista * buscarNodo(tLista *,int);
 
 // Metodos para los nodos 'hijos'
@@ -44,6 +43,7 @@ void eliminarHijos(tHijo **);
 void mostrarTodos(tLista *, int);
 void mostrarHijos(tLista *, int);
 void padreSeleccionado(tLista * , int, int);
+tElemento modificarElemento(tElemento);
 
 
 // ------------------------ Definicion de Metodos
@@ -361,5 +361,21 @@ void eliminarHijos(tHijo ** pHijo){
     free(*pHijo);
 
     printf("Hijo eliminado \n");
+
+}
+
+tElemento modificarElemento(tElemento pElemento){
+
+    printf(BG_WHITE BLACK);
+    printf("\n Ingrese el Nuevo Titulo: ");
+    printf(BG_BLACK WHITE " ");
+    gets(pElemento.datos.titulo);
+    
+    printf(BG_WHITE BLACK);
+    printf("Ingrese la Nueva Descripcion: ");
+    printf(BG_BLACK WHITE " ");
+    gets(pElemento.datos.descripcion);
+
+    return pElemento;
 
 }

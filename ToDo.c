@@ -103,6 +103,15 @@ void navegar(){
             
         }
 
+        if(input == 109){ // M - Modificar
+
+            if(padreSelect != dimension){
+                tLista * padreAux = buscarNodo(toDoList,padreSelect);
+                padreAux->elemento = modificarElemento(padreAux->elemento);
+            }
+
+        }
+
         if(input == 97){ // A - Add hijo
 
             if(padreSelect != dimension){
@@ -162,6 +171,13 @@ void navegar(){
                     opciones();
                  
                 }        
+
+                if(inputHijo == 109){ // M - Modificar
+
+                    tHijo * hijoAux = buscarHijo(buscarNodo(toDoList,padreSelect),hijoSelect);
+                    hijoAux->elemento = modificarElemento(hijoAux->elemento);
+
+                }
 
                 if(inputHijo == 120){ // X - Salir hijo
                     padreSelect = 1;
@@ -358,6 +374,8 @@ void opciones(){
 
     printf(BG_WHITE BLACK " D ");
     printf(BG_BLACK WHITE "- Delete | ");
+    printf(BG_WHITE BLACK " M ");
+    printf(BG_BLACK WHITE "- Modificar \n");
 
 }
 
