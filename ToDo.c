@@ -15,7 +15,6 @@ tElemento elementoAux;
 FILE * archivo;
 
 bool esPadre;
-int posUltimoPadre;
 
 // Funciones de navegacion y verificacion de elementos
 void navegar();
@@ -260,7 +259,6 @@ void verificarHijosSeleccionados(tLista * pTodoList){
 // ------------------------ PROCESO CORTE DE CONTROL
 void inicializarPrograma(){
     insertarNodo(&toDoList, constructorElemento(0,0,"Add new task",EP));
-    posUltimoPadre = 0;
     archivo = fopen("TodoList-Elements.dat","rb");
 
     if(archivo != NULL){
@@ -275,9 +273,6 @@ void inicializarPrograma(){
 void procesoCorte(){
 
     while(!feof(archivo)){
-        
-        // printf("%s \n", elementoAux.datos.descripcion);
-        // leerRegistro();
         
         principioCorte();
 
@@ -317,7 +312,6 @@ void unHijo(){
 void guardarArchivo(){
 
     archivo = fopen("TodoList-Elements.dat","wb");
-    tHijo * hijoAux;
 
     guardarPadres(toDoList);
 
