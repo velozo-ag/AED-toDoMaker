@@ -3,204 +3,375 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <Windows.h>
+#include "colors.h"
 
-// Definicion de tipos
-typedef char tString[200];
+// ------------------------ TAD estructuras y metodos de toDo, con sus respectivos tipos y elementos
+#include "toDoStruct.h"
 
-typedef struct{
-    int id;
-    bool esPadre;
-    bool isChecked;
-    tString titulo;
-    tString descripcion;
-}tElemento;
-
-typedef struct nodo{
-    tElemento elemento;
-    struct nodo *siguiente;
-    struct nodo *hijo;
-}tLista;
-
-// Lista Enlazada
+// ------------------------ Definicion de Variables
 tLista * toDoList;
+tElemento elementoAux;
+FILE * archivo;
 
-// Prototipos
-void inicializarLista();
-tElemento crearElemento(int);
+bool esPadre;
+int posUltimoPadre;
 
-void insertarPrimerNodo(tElemento);
-void insertarNodo(tElemento);
+// Funciones de navegacion y verificacion de elementos
+void navegar();
+void opciones();
+void selectElementPadre(tLista *);
+void selectElementHijo(tHijo *);
+void padreSeleccionado(tLista *, int, int);
+void verificarHijosSeleccionados(tLista *);
+bool verificacionEliminar(tString);
 
-tLista * buscarNodo(tLista*,int);
+// Funciones para corte de control
+void inicializarPrograma();
+void leerRegistro();
+void procesoCorte();
+void principioCorte();
+void finCorte();
+void unElemento();
+void unHijo();
 
-void insertarPrimerHijo(tLista *,tElemento);
-void insertarHijo(tLista*,tElemento);
+// Guardado de archivos
+void guardarArchivo();
+void guardarPadres(tLista *);
+void guardarHijos(tHijo *);
 
-void mostrar();
-void mostrarHijos(tLista*);
+int main(){
+    
+    system("cls");
 
-int main()
-{
+    inicializarLista(toDoList);
+    inicializarPrograma();
 
-    inicializarLista();
-    insertarNodo(crearElemento(1));
-    insertarNodo(crearElemento(1));
-    insertarNodo(crearElemento(1));
-    mostrar();
+    navegar();
 
-    insertarHijo(buscarNodo(toDoList,2),crearElemento(0));
-    insertarHijo(buscarNodo(toDoList,2),crearElemento(0));
-    insertarHijo(buscarNodo(toDoList,3),crearElemento(0));
-    insertarHijo(buscarNodo(toDoList,2),crearElemento(0));
-    insertarHijo(buscarNodo(toDoList,1),crearElemento(0));
-
-    mostrar();
+    guardarArchivo();
 
     return 0;
+    
 }
 
+void navegar(){
 
-void inicializarLista(){
-    toDoList = NULL;
+    int padreSelect = 1;
+    int hijoSelect = 0;
+    int dimension = dimensionLista(toDoList);
+    int input;
+
+    mostrarTodos(toDoList, padreSelect);
+    opciones();
+
+    while(1){   
+
+        Sleep(10);
+
+        input = tolower(getch());
+
+        if(input == 119){ // W - Arriba
+
+            if(padreSelect == 1){
+                padreSelect = dimension;
+            }else{
+                padreSelect--;                
+            }
+
+        }
+        
+        if(input == 115){ // S - Abajo
+
+            if(padreSelect == dimension){
+                padreSelect = 1;
+            }else{
+                padreSelect++;
+            }
+
+        }
+
+        if(input == 13){ // Enter - Check
+            
+            if(padreSelect == dimension){
+                insertarNodo(&toDoList, crearElemento(1));
+                dimension = dimensionLista(toDoList);
+                padreSelect = 1;
+            }else{
+                selectElementPadre(buscarNodo(toDoList,padreSelect));
+            }
+            
+        }
+
+        if(input == 97){ // A - Add hijo
+
+            if(padreSelect != dimension){
+                insertarHijo(buscarNodo(toDoList,padreSelect), crearElemento(0));
+            }
+
+        }
+
+        if(input == 101){ // E - Ingreso a lista hijos
+
+            hijoSelect = 1;
+            padreSeleccionado(toDoList, padreSelect, hijoSelect);
+            opciones();
+
+            int dimHijo = dimensionHijo(buscarNodo(toDoList,padreSelect)->hijo);
+            int inputHijo;
+
+            while(1){
+
+                Sleep(10);
+
+                inputHijo = tolower(getch());
+                
+                if(inputHijo == 119){ // W - Arriba
+
+                    if(hijoSelect == 1){
+                        hijoSelect = dimHijo;
+                    }else{
+                        hijoSelect--;                
+                    }
+
+                    padreSeleccionado(toDoList, padreSelect, hijoSelect);
+                    opciones();
+
+                }
+
+                if(inputHijo == 115){ // S - Abajo
+                    
+                    if(hijoSelect == dimHijo){
+                        hijoSelect = 1;
+                    }else{
+                        hijoSelect++;
+                    }
+
+                    padreSeleccionado(toDoList, padreSelect, hijoSelect);
+                    opciones();
+
+                }
+                
+                if(inputHijo == 13){ // Enter - Seleccionar
+                    
+                    selectElementHijo(buscarHijo(buscarNodo(toDoList,padreSelect),hijoSelect));
+                    verificarHijosSeleccionados(buscarNodo(toDoList,padreSelect));
+
+                    padreSeleccionado(toDoList, padreSelect, hijoSelect);
+                    
+                    opciones();
+                 
+                }        
+
+                if(inputHijo == 120){ // X - Salir hijo
+                    padreSelect = 1;
+                    mostrarTodos(toDoList, padreSelect);
+                    opciones();
+                    hijoSelect = 0;
+                    break;
+                }
+
+            }
+
+        }
+        
+        if(input == 100){ // D - Eliminar padre
+
+            tLista * padreAux = buscarNodo(toDoList,padreSelect);
+
+	        if(verificacionEliminar(padreAux->elemento.datos.titulo)){
+	            eliminarPadre(&toDoList,padreSelect);    
+	            dimension--;
+	        }
+
+            mostrarTodos(toDoList, padreSelect);
+
+        }
+
+        mostrarTodos(toDoList, padreSelect);
+        opciones();
+
+        if(input == 120){ // X - Terminar programa
+            break;
+        }
+
+    }
+
 }
 
-tElemento crearElemento(int esPadre){
-    tElemento nuevoElemento;
+void selectElementPadre(tLista * pTodoList){
 
-    if(esPadre == 1){
-        nuevoElemento.esPadre = true;
+    pTodoList->elemento.isChecked = !pTodoList->elemento.isChecked;
+    tHijo * hijoAux;
+
+    if(pTodoList->hijo != NULL){
+        hijoAux = pTodoList->hijo;  
+        if(pTodoList->elemento.isChecked){
+            while(hijoAux != NULL){
+                hijoAux->elemento.isChecked = true;
+                hijoAux = hijoAux->siguiente;
+            }
+        }else{
+            while(hijoAux != NULL){
+                hijoAux->elemento.isChecked = false;
+                hijoAux = hijoAux->siguiente;
+            }
+        }   
+    }
+}
+
+void selectElementHijo(tHijo * pHijo){
+    pHijo->elemento.isChecked = !pHijo->elemento.isChecked;
+}
+
+void verificarHijosSeleccionados(tLista * pTodoList){
+    bool bandera = true;
+    tHijo * hijoAux = pTodoList->hijo;
+
+    while(hijoAux != NULL){
+        if(!hijoAux->elemento.isChecked){
+            bandera = false;
+        }
+        hijoAux = hijoAux->siguiente;
+    }
+    if(bandera){
+        pTodoList->elemento.isChecked = true;
     }else{
-        nuevoElemento.esPadre = false;
+        pTodoList->elemento.isChecked = false;
     }
-    
-    printf("Ingrese el titulo: ");
-    gets(nuevoElemento.titulo);
-    printf("Ingrese la descripcion: ");
-    gets(nuevoElemento.descripcion);
-    nuevoElemento.isChecked = false;
-
-    return nuevoElemento;
 }
 
-void insertarPrimerNodo(tElemento elem){
+// ------------------------ PROCESO CORTE DE CONTROL
+void inicializarPrograma(){
+    insertarNodo(&toDoList, constructorElemento(0,0,"Add new task",EP));
+    posUltimoPadre = 0;
+    archivo = fopen("TodoList-Elements.dat","rb");
 
-    tLista * nuevoNodo;
+    if(archivo != NULL){
+        fread(&elementoAux, sizeof(tElemento), 1, archivo);
+        procesoCorte();
+    }
 
-    nuevoNodo = (tLista*) malloc(sizeof(tLista));
-
-    nuevoNodo->elemento = elem;
-    nuevoNodo->siguiente = NULL;
-    nuevoNodo->hijo = NULL;
-
-    toDoList = nuevoNodo;
+    fclose(archivo);
 
 }
 
-void insertarNodo(tElemento elem){
+void procesoCorte(){
 
-    if(toDoList==NULL){
-        insertarPrimerNodo(elem);
-        return;
-    }
-
-    tLista * nuevoNodo = (tLista*) malloc(sizeof(tLista));
-    tLista * aux = toDoList;
-    
-    while(aux->siguiente != NULL){
-        aux = aux->siguiente;
-    }
-
-    nuevoNodo->elemento = elem;
-    nuevoNodo->siguiente = NULL;
-    nuevoNodo->hijo = NULL;
-
-    aux->siguiente = nuevoNodo;
-
-}
-
-void insertarHijo(tLista * padre, tElemento elem){
-
-    if(padre->hijo == NULL){
-        insertarPrimerHijo(padre,elem);
-        return;
-    }
-
-    tLista * nuevoHijo = (tLista*) malloc(sizeof(tLista));
-    tLista * aux = padre->hijo;
-    
-    while(aux->siguiente != NULL){
-        aux = aux->siguiente;
-    }
-
-    nuevoHijo->elemento = elem;
-    nuevoHijo->siguiente = NULL;
-    
-    aux->siguiente = nuevoHijo;
-
-}
-
-void insertarPrimerHijo(tLista* padre, tElemento elem){
-    tLista * nuevoHijo;
-
-    nuevoHijo = (tLista*) malloc(sizeof(tLista));
-
-    nuevoHijo->elemento = elem;
-    nuevoHijo->siguiente = NULL;
-    nuevoHijo->hijo = NULL;
-
-    padre->hijo = nuevoHijo;
-}
-
-void mostrar(){
-
-    tLista * aux = toDoList;
-    tElemento elemento = aux->elemento;
-
-    printf("\n\n---------- Nashe ----------\n");
-
-    while(aux != NULL){
-        printf("%s, %s\n", elemento.titulo, elemento.descripcion);
+    while(!feof(archivo)){
         
-        if(aux->hijo != NULL){
-            mostrarHijos(aux);
+        // printf("%s \n", elementoAux.datos.descripcion);
+        // leerRegistro();
+        
+        principioCorte();
+
+        while(!feof(archivo) && esPadre == elementoAux.esPadre){
+            unElemento();
+            leerRegistro();
         }
 
-        aux = aux->siguiente;
-        
-        if(aux != NULL){
-            elemento = aux->elemento;
-        }
-
+        finCorte();
     }
 
 }
 
-void mostrarHijos(tLista * padre){
+void leerRegistro(){
+    fread(&elementoAux, sizeof(tElemento), 1, archivo);
+}
 
-    tLista * aux = padre->hijo;
-    tElemento elemento = aux->elemento;
+void principioCorte(){
+    esPadre = elementoAux.esPadre;
+}
 
-    while(aux != NULL){
-        printf("\t%s, %s\n", elemento.titulo, elemento.descripcion);
-        
-        aux = aux->siguiente;
-        
-        if(aux != NULL){
-            elemento = aux->elemento;
-        }
+void finCorte(){
+    while((!feof(archivo)) && (elementoAux.esPadre == 0)){
+        unHijo();
+        leerRegistro();
     }
+}
+
+void unElemento(){
+    insertarNodo(&toDoList,elementoAux);
+}
+
+void unHijo(){
+    insertarHijo(buscarNodo(toDoList,1), elementoAux);
+}
+
+void guardarArchivo(){
+
+    archivo = fopen("TodoList-Elements.dat","wb");
+    tHijo * hijoAux;
+
+    guardarPadres(toDoList);
+
+    fclose(archivo);
 
 }
 
-tLista * buscarNodo(tLista * lista, int k){
+void guardarPadres(tLista * pPadre){
 
-    int i;
-    tLista * aux = lista;
+    tHijo * hijoAux;
 
-    for(i = 1; i < k; i++){
-        aux = aux->siguiente;
+    if(pPadre->siguiente != NULL){
+        guardarPadres(pPadre->siguiente);
     }
 
-    return aux;
+    elementoAux = pPadre->elemento;
+
+    // Compara si no es el elemento creador
+    if(strcmp(elementoAux.datos.descripcion,EP)){
+        fwrite(&elementoAux, sizeof(tElemento), 1, archivo);
+
+        if(pPadre->hijo != NULL){
+            guardarHijos(pPadre->hijo);
+        }
+    }
+}
+
+void guardarHijos(tHijo * pHijo){
+    if(pHijo->siguiente != NULL){
+        guardarHijos(pHijo->siguiente);
+    }
+
+    elementoAux = pHijo->elemento;
+    fwrite(&elementoAux, sizeof(tElemento), 1, archivo);
+}
+
+
+// ------------------------ IMPRIMIR OPCIONES
+void opciones(){
+
+    printf(BG_WHITE BLACK " W ");
+    printf(BG_BLACK WHITE "- Up     | ");
+    printf(BG_WHITE BLACK " A ");
+    printf(BG_BLACK WHITE "- AddSub | ");
+    printf(BG_WHITE BLACK " Enter ");
+    printf(BG_BLACK WHITE "- Check \n");
+
+    printf(BG_WHITE BLACK " S ");
+    printf(BG_BLACK WHITE "- Down   | ");
+    printf(BG_WHITE BLACK " E ");
+    printf(BG_BLACK WHITE "- NavSub | ");
+    printf(BG_WHITE BLACK " X ");
+    printf(BG_BLACK WHITE "- Exit   \n");
+
+    printf(BG_WHITE BLACK " D ");
+    printf(BG_BLACK WHITE "- Delete | ");
+
+}
+
+bool verificacionEliminar(tString titulo){
+
+    int op;
+    printf(BG_WHITE BLACK "\nSeguro de eliminar %s? Y/n:", titulo);
+    printf(BG_BLACK WHITE " - ");
+    op = tolower(getch());
+
+    if(op == 121){
+        return true;
+    }else{
+        return false;
+    }
 
 }

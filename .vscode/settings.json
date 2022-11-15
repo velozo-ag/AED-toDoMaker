@@ -5,6 +5,14 @@
         "stdbool.h": "c",
         "stdio.h": "c",
         "stdlib.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "PRUEBA.C": "cpp",
+        "element.h": "c",
+        "windows.h": "c",
+        "todostruct.h": "c",
+        "colors.h": "c",
+        "cmath": "c",
+        "random": "c",
+        "*.tcc": "c"
     }
 }
