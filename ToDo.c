@@ -176,6 +176,9 @@ void navegar(){
                     tHijo * hijoAux = buscarHijo(buscarNodo(toDoList,padreSelect),hijoSelect);
                     hijoAux->elemento = modificarElemento(hijoAux->elemento);
 
+                    padreSeleccionado(toDoList, padreSelect, hijoSelect);
+                    opciones();
+
                 }
 
                 if(inputHijo == 120){ // X - Salir hijo
@@ -347,7 +350,6 @@ void guardarHijos(tHijo * pHijo){
     elementoAux = pHijo->elemento;
     fwrite(&elementoAux, sizeof(tElemento), 1, archivo);
 }
-
 
 // ------------------------ IMPRIMIR OPCIONES
 void opciones(){
